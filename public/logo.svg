@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Fundo com gradiente -->
+  <rect width="1024" height="1024" rx="224" fill="url(#paint0_linear)"/>
+  
+  <!-- Círculo de progresso -->
+  <path d="M512 224C644.548 224 752 331.452 752 464C752 596.548 644.548 704 512 704C379.452 704 272 596.548 272 464C272 331.452 379.452 224 512 224ZM512 304C423.635 304 352 375.635 352 464C352 552.365 423.635 624 512 624C600.365 624 672 552.365 672 464C672 375.635 600.365 304 512 304Z" fill="white" fill-opacity="0.9"/>
+  
+  <!-- Garfo e Faca -->
+  <path d="M464 384V544M560 384V544M512 384V544M464 384H560" stroke="white" stroke-width="32" stroke-linecap="round" stroke-linejoin="round"/>
+  
+  <!-- Definição do gradiente -->
+  <defs>
+    <linearGradient id="paint0_linear" x1="0" y1="0" x2="1024" y2="1024" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#3B82F6"/>
+      <stop offset="100%" stop-color="#22C55E"/>
+    </linearGradient>
+  </defs>
+</svg> 

@@ -1,0 +1,19 @@
+{
+  "name": "Diet & Workout Tracker",
+  "short_name": "Diet Tracker",
+  "description": "Acompanhe sua dieta e treinos de forma simples e eficiente",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64",
+      "type": "image/x-icon"
+    }
+  ],
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "theme_color": "#343030",
+  "background_color": "#ffffff",
+  "orientation": "portrait",
+  "prefer_related_applications": false
+} 

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Teste Supabase</title>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <h1>Teste de Conexão com Supabase</h1>
+    <pre id="output"></pre>
+
+    <script>
+        const { createClient } = supabase;
+        const supabaseClient = createClient(
+            'https://pbejndhzvliniswiexin.supabase.co',
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBiZWpuZGh6dmxpbmlzd2lleGluIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE3MjY1MTAsImV4cCI6MjA1NzMwMjUxMH0.Itw3DJ6tQwPsMGm3FbBnQe0wT7DvNd53vyl_QRdMm2A'
+        );
+
+        function log(message) {
+            const output = document.getElementById('output');
+            output.textContent += message + '\n';
+            console.log(message);  // Também loga no console para debug
+        }
+
+        async function testarConexao() {
+            try {
+                log('Verificando tabelas...');
+
+                // Tenta listar usuários
+                const { data: usuarios, error: usuariosError } = await supabaseClient
+                    .from('usuarios')
+                    .select('*')
+                    .limit(1);
+
+                if (usuariosError) {
+                    log('Erro ao verificar tabela usuarios: ' + usuariosError.message);
+                } else {
+                    log('✅ Tabela usuarios OK');
+                    log('Usuários encontrados: ' + JSON.stringify(usuarios, null, 2));
+                }
+
+                // Se não houver usuários, tenta criar um
+                if (!usuarios || usuarios.length === 0) {
+                    log('Nenhum usuário encontrado. Tentando criar um usuário de teste...');
+
+                    const { data: novoUsuario, error: erroUsuario } = await supabaseClient
+                        .from('usuarios')
+                        .insert([{
+                            nome: "Evandro",
+                            idade: 30,
+                            peso: 85,
+                            altura: 180,
+                            sexo: "masculino",
+                            nivel_atividade: "moderado",
+                            objetivo: "perder",
+                            meta_calorica: 2200,
+                            meta_proteina: 170,
+                            meta_treinos: 6
+                        }])
+                        .select()
+                        .single();
+
+                    if (erroUsuario) {
+                        log('Erro ao criar usuário: ' + JSON.stringify(erroUsuario, null, 2));
+                    } else {
+                        log('✅ Usuário criado com sucesso: ' + JSON.stringify(novoUsuario, null, 2));
+                    }
+                }
+
+                // Tenta listar refeições
+                const { data: refeicoes, error: refeicoesError } = await supabaseClient
+                    .from('refeicoes')
+                    .select('*')
+                    .limit(1);
+
+                if (refeicoesError) {
+                    log('Erro ao verificar tabela refeicoes: ' + refeicoesError.message);
+                } else {
+                    log('✅ Tabela refeicoes OK');
+                    log('Refeições encontradas: ' + JSON.stringify(refeicoes, null, 2));
+                }
+
+                // Tenta listar registros de peso
+                const { data: registros, error: registrosError } = await supabaseClient
+                    .from('registro_peso')
+                    .select('*')
+                    .limit(1);
+
+                if (registrosError) {
+                    log('Erro ao verificar tabela registro_peso: ' + registrosError.message);
+                } else {
+                    log('✅ Tabela registro_peso OK');
+                    log('Registros encontrados: ' + JSON.stringify(registros, null, 2));
+                }
+
+            } catch (error) {
+                log('Erro no teste: ' + error);
+            }
+        }
+
+        // Inicia o teste quando a página carregar
+        window.onload = testarConexao;
+    </script>
+</body>
+</html> 
