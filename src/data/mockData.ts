@@ -58,7 +58,7 @@ export const mockRefeicoes: Refeicao[] = [
 export const mockRegistrosPeso: RegistroPeso[] = Array.from({ length: 15 }, (_, i) => ({
   id: `peso-${i + 1}`,
   usuario_id: 'demo-user-id',
-  peso: 75 - (i * 0.05) + (Math.random() - 0.5) * 0.2, // Tendência decrescente com variação
+  peso: parseFloat((75 - (i * 0.1) + (Math.random() - 0.5) * 0.3).toFixed(1)), // Tendência decrescente limpa
   data: getDateDaysAgo(i),
   created_at: new Date().toISOString()
 }));

@@ -183,71 +183,35 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  // Carregar configurações e perfil
+  // Carregar configurações e perfil apenas uma vez na montagem
   useEffect(() => {
     loadProfile();
-  }, [selectedDate]);
+  }, []); // Removido selectedDate da dependência para evitar recarregamentos
 
-  // Função para forçar a recarga do perfil
-  const reloadProfile = () => {
-    loadProfile();
-  };
-
-  // Efeito para recarregar o perfil quando o componente for montado ou quando voltar a ser visível
+  // Carregar dados específicos quando a data mudar
   useEffect(() => {
-    // Carregar o perfil quando o componente montar
-    loadProfile();
-
-    // Adicionar um event listener para o evento 'focus' da janela
-    // Isso fará com que o perfil seja recarregado quando o usuário voltar para a página
-    window.addEventListener('focus', reloadProfile);
+    if (!profile) return; // Só carrega se já tiver o perfil
     
-    // Limpar o event listener quando o componente for desmontado
-    return () => {
-      window.removeEventListener('focus', reloadProfile);
-    };
-  }, []);
-
-  // Carregar refeições do dia
-  useEffect(() => {
-    const carregarRefeicoes = async () => {
+    const carregarDadosDaData = async () => {
       try {
-        // Usar a data selecionada diretamente
         const dataFormatada = format(selectedDate, 'yyyy-MM-dd');
-        
-        // Não precisamos mais do profile.id, usamos getCurrentUserId via API
+        const userId = getCurrentUserId();
+        if (!userId) return;
+
+        // Carregar refeições do dia selecionado
         const { data: refeicoesDoDia } = await supabaseApi.listarRefeicoesDoDia(dataFormatada);
         setRefeicoes(refeicoesDoDia || []);
-      } catch (error) {
-        console.error('Erro ao carregar refeições:', error);
-      }
-    };
 
-    carregarRefeicoes();
-  }, [selectedDate]);
-
-  // Carregar treinos da semana
-  useEffect(() => {
-    const carregarTreinosDaSemana = async () => {
-      try {
-        const userId = await getCurrentUserId();
-        if (!userId) return;
-        
-        // Carregar apenas os treinos da data selecionada
-        const dataFormatada = format(selectedDate, 'yyyy-MM-dd');
+        // Carregar treinos do dia selecionado
         const { data: treinosDoDia } = await supabaseApi.listarTreinosDoDia(dataFormatada, userId);
         setTreinosDaSemana(treinosDoDia || []);
-        
-        // Carregar total de treinos da semana para estatísticas
-        const { data: treinosDaSemana } = await supabaseApi.listarTreinosDaSemana(userId);
-        setTotalTreinosSemana(treinosDaSemana?.length || 0);
       } catch (error) {
-        console.error('Erro ao carregar treinos:', error);
+        console.error('Erro ao carregar dados da data:', error);
       }
     };
-    
-    carregarTreinosDaSemana();
-  }, [selectedDate]);
+
+    carregarDadosDaData();
+  }, [selectedDate, profile?.id]); // Só recarrega quando a data ou perfil mudam
 
   const handleAddRefeicao = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -365,52 +329,27 @@ const Dashboard: React.FC = () => {
     try {
       setIsUpdatingWeight(true);
       const pesoAtualizado = parseFloat(newWeight);
-      const userId = await getCurrentUserId();
+      const userId = getCurrentUserId();
       if (!userId) throw new Error('Usuário não autenticado');
 
-      // 1. Registrar o novo peso na tabela registro_peso
+      // Registrar o novo peso usando a API mock
       const dataAtual = format(new Date(), 'yyyy-MM-dd');
-      console.log('Inserindo novo peso:', pesoAtualizado, 'para o usuário:', userId, 'na data:', dataAtual);
-      
-      const { error } = await supabase
-        .from('registro_peso')
-        .insert([{
-          usuario_id: userId,
-          peso: pesoAtualizado,
-          data: dataAtual
-        }]);
+      await supabaseApi.registrarPeso({
+        usuario_id: userId,
+        peso: pesoAtualizado,
+        data: dataAtual
+      });
 
-      if (error) {
-        console.error('Erro ao inserir peso:', error);
-        throw new Error('Erro ao registrar o novo peso: ' + error.message);
-      }
-      
-      console.log('Peso inserido com sucesso');
-
-      // 2. Obter o último peso registrado para confirmar a inserção
-      const { data: ultimoRegistroPeso } = await supabaseApi.obterUltimoPesoRegistrado(userId);
-      
-      if (!ultimoRegistroPeso) {
-        console.error('Erro: Não foi possível obter o último peso registrado após a inserção');
-      } else {
-        console.log('Último peso registrado após inserção:', ultimoRegistroPeso);
-      }
-
-      // 3. Atualizar a UI com o novo peso
+      // Atualizar a UI com o novo peso
       if (profile) {
-        // Calculamos a diferença entre o peso inicial e o atual
         const pesoInicial = profile.peso_inicial || profile.peso;
         const diferenca = pesoAtualizado - pesoInicial;
         const diferencaFormatada = diferenca > 0 ? `+${diferenca.toFixed(1)}` : diferenca.toFixed(1);
         
-        console.log('Atualizando UI com o novo peso:', pesoAtualizado);
-        
-        // Atualizamos o perfil com o novo peso
         setProfile(prev => {
           if (!prev) return null;
           return {
             ...prev,
-            id: prev.id,
             peso_atual: pesoAtualizado,
             data_peso: dataAtual,
             diferenca_peso: diferencaFormatada
@@ -420,11 +359,6 @@ const Dashboard: React.FC = () => {
       
       setNewWeight('');
       setShowWeightForm(false);
-      
-      // 4. Forçar uma recarga do perfil para garantir que os dados estejam atualizados
-      setTimeout(() => {
-        loadProfile();
-      }, 500);
       
     } catch (error) {
       console.error('Erro ao atualizar peso:', error);
