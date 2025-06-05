@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { CalendarDays, TrendingDown, TrendingUp, Target } from 'lucide-react';
+import { CalendarDays, TrendingDown, TrendingUp, Target, Clock, Utensils, Dumbbell, Scale, ChevronRight, Calendar, BarChart2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface HistoryEntry {
   date: string;
@@ -24,6 +25,7 @@ interface ConfigUsuario {
 const History: React.FC = () => {
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [config, setConfig] = useState<ConfigUsuario | null>(null);
+  const [expandedDay, setExpandedDay] = useState<string | null>(null);
 
   useEffect(() => {
     const savedHistory = localStorage.getItem('history');
@@ -44,6 +46,13 @@ const History: React.FC = () => {
       month: 'long',
       year: 'numeric'
     });
+  };
+
+  const formatDay = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('pt-BR', { 
+      weekday: 'long',
+    }).replace(/^\w/, (c) => c.toUpperCase());
   };
 
   const analisarProgresso = () => {
@@ -68,171 +77,261 @@ const History: React.FC = () => {
     };
   };
 
+  const toggleExpandDay = (date: string) => {
+    if (expandedDay === date) {
+      setExpandedDay(null);
+    } else {
+      setExpandedDay(date);
+    }
+  };
+
   const progresso = analisarProgresso();
 
   return (
-    <div className="space-y-6">
-      {history.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          <CalendarDays className="w-12 h-12 text-gray-300 mb-4" />
-          <p className="text-gray-500">Nenhum histórico disponível</p>
-          <p className="text-sm text-gray-400 mt-1">Complete seu primeiro dia para ver o histórico</p>
+    <div className="relative bg-gradient-to-b from-[#0C0C0C] to-[#0A0A0A] min-h-screen pb-20">
+      {/* Gradiente principal no fundo - com opacidade reduzida */}
+      <div 
+        className="fixed inset-0 z-0 pointer-events-none"
+        style={{ 
+          background: 'radial-gradient(circle at center, rgba(20, 20, 25, 0.3), transparent 70%), linear-gradient(135deg, rgba(30, 41, 59, 0.3) 0%, rgba(17, 24, 39, 0.2) 100%)',
+        }}
+      />
+      
+      {/* Decorative gradient blobs com opacidade reduzida */}
+      <div 
+        className="absolute top-0 right-0 w-96 h-96 opacity-20 z-0 pointer-events-none blur-3xl"
+        style={{ 
+          background: 'radial-gradient(circle at top right, rgba(61, 90, 254, 0.5), transparent 70%)',
+          transform: 'translate(30%, -30%)'
+        }}
+      />
+      <div 
+        className="absolute bottom-0 left-0 w-96 h-96 opacity-20 z-0 pointer-events-none blur-3xl"
+        style={{ 
+          background: 'radial-gradient(circle at bottom left, rgba(0, 230, 118, 0.5), transparent 70%)',
+          transform: 'translate(-30%, 30%)'
+        }}
+      />
+      
+      {/* Conteúdo principal */}
+      <div className="max-w-md mx-auto px-4 relative z-10 pt-5 pb-20">
+        {/* Cabeçalho */}
+        <div className="mb-6 flex flex-col items-center">
+          <div className="flex items-center gap-2">
+            <Calendar className="text-indigo-400 w-5 h-5" />
+            <h1 className="text-2xl font-bold text-white">Histórico</h1>
+          </div>
+          <p className="text-[#B0B0B0] text-sm mt-1">Acompanhe seu progresso ao longo do tempo</p>
         </div>
-      ) : (
-        <>
-          {/* Resumo do Progresso */}
-          {progresso && (
-            <div className="bg-white border border-gray-100 p-6 rounded-2xl">
-              <h2 className="text-lg font-medium text-black mb-4">Análise da Última Semana</h2>
-              
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-500">Metas de Calorias Atingidas</p>
-                    <p className="text-xl font-semibold text-black mt-1">{progresso.metasCalorias}/7</p>
-                  </div>
-                  {progresso.metasCalorias >= 5 ? (
-                    <TrendingDown className="w-6 h-6 text-green-500" />
-                  ) : (
-                    <TrendingUp className="w-6 h-6 text-red-500" />
-                  )}
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-500">Metas de Proteína Atingidas</p>
-                    <p className="text-xl font-semibold text-black mt-1">{progresso.metasProteina}/7</p>
-                  </div>
-                  {progresso.metasProteina >= 5 ? (
-                    <Target className="w-6 h-6 text-green-500" />
-                  ) : (
-                    <Target className="w-6 h-6 text-red-500" />
-                  )}
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-500">Treinos Realizados</p>
-                    <p className="text-xl font-semibold text-black mt-1">{progresso.treinos}/7</p>
-                  </div>
-                </div>
-
-                {progresso.diferencaPeso !== null && (
-                  <div className="pt-4 border-t border-gray-100">
-                    <p className="text-sm text-gray-500">Variação de Peso</p>
-                    <div className="flex items-center mt-1">
-                      <p className={`text-xl font-semibold ${
-                        progresso.diferencaPeso <= 0 ? 'text-green-500' : 'text-red-500'
-                      }`}>
-                        {progresso.diferencaPeso.toFixed(1)} kg
-                      </p>
-                      {progresso.diferencaPeso <= 0 ? (
-                        <TrendingDown className="w-5 h-5 text-green-500 ml-2" />
-                      ) : (
-                        <TrendingUp className="w-5 h-5 text-red-500 ml-2" />
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* Sugestões de Melhoria */}
-                <div className="mt-6 pt-4 border-t border-gray-100">
-                  <h3 className="text-sm font-medium text-gray-500 mb-2">Sugestões de Melhoria</h3>
-                  <ul className="space-y-2">
-                    {progresso.metasCalorias < 5 && (
-                      <li className="text-sm text-gray-600">
-                        • Tente planejar suas refeições com antecedência para manter o déficit calórico
-                      </li>
-                    )}
-                    {progresso.metasProteina < 5 && (
-                      <li className="text-sm text-gray-600">
-                        • Inclua mais fontes de proteína magra em suas refeições principais
-                      </li>
-                    )}
-                    {progresso.treinos < 4 && (
-                      <li className="text-sm text-gray-600">
-                        • Estabeleça uma rotina fixa de treinos para aumentar a frequência
-                      </li>
-                    )}
-                    {progresso.diferencaPeso !== null && progresso.diferencaPeso > 0 && (
-                      <li className="text-sm text-gray-600">
-                        • Revise suas porções e considere aumentar a atividade física
-                      </li>
-                    )}
-                  </ul>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Histórico Diário */}
-          <div className="space-y-4">
-            {history.map((entry, index) => (
-              <div key={index} className="bg-white border border-gray-100 p-6 rounded-2xl">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-medium text-black">{formatDate(entry.date)}</h2>
-                  <CalendarDays className="w-5 h-5 text-gray-400" />
+        
+        {history.length === 0 ? (
+          <div className="bg-[#151515] rounded-xl p-8 shadow-lg border border-[#222222] flex flex-col items-center justify-center text-center">
+            <CalendarDays className="w-12 h-12 text-[#3D5AFE] mb-4 opacity-70" />
+            <p className="text-white mb-2">Nenhum histórico disponível</p>
+            <p className="text-[#B0B0B0] text-sm">Complete seu primeiro dia para ver o histórico</p>
+          </div>
+        ) : (
+          <>
+            {/* Resumo do Progresso */}
+            {progresso && (
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-gradient-to-br from-[#151515] to-[#101010] rounded-xl p-5 shadow-lg border border-[#222222] mb-6"
+              >
+                <div className="flex items-center gap-2 mb-4">
+                  <BarChart2 className="text-indigo-400 w-5 h-5" />
+                  <h2 className="text-lg font-semibold text-white">Análise da Última Semana</h2>
                 </div>
                 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm font-medium text-gray-500">Total de Calorias</p>
-                    <p className="text-xl font-semibold text-black mt-1">
-                      {entry.totalCalories}
-                      <span className="text-sm text-gray-400 ml-1">kcal</span>
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-500">Total de Proteína</p>
-                    <p className="text-xl font-semibold text-black mt-1">
-                      {entry.totalProtein}
-                      <span className="text-sm text-gray-400 ml-1">g</span>
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mt-4 pt-4 border-t border-gray-100">
-                  <p className="text-sm font-medium text-gray-500 mb-2">Refeições</p>
-                  <div className="space-y-3">
-                    {entry.entries.map((meal, mealIndex) => (
-                      <div key={mealIndex} className="flex justify-between items-center">
-                        <div>
-                          <p className="font-medium text-black">{meal.food}</p>
-                          <p className="text-sm text-gray-500">{meal.time}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-black">{meal.calories} kcal</p>
-                          <p className="text-sm text-gray-500">{meal.protein}g proteína</p>
-                        </div>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-[#B0B0B0] text-sm">Metas de Calorias</p>
+                      <p className="text-xl font-semibold text-white mt-1">{progresso.metasCalorias}/7</p>
+                    </div>
+                    {progresso.metasCalorias >= 5 ? (
+                      <div className="bg-[#1A1A1A] p-2 rounded-lg">
+                        <TrendingDown className="w-6 h-6 text-green-400" />
                       </div>
-                    ))}
+                    ) : (
+                      <div className="bg-[#1A1A1A] p-2 rounded-lg">
+                        <TrendingUp className="w-6 h-6 text-orange-400" />
+                      </div>
+                    )}
                   </div>
-                </div>
 
-                {/* Status do Dia */}
-                <div className="mt-4 pt-4 border-t border-gray-100">
-                  <div className="flex space-x-4">
-                    <div className={`px-3 py-1 rounded-full text-sm ${
-                      entry.metasAtingidas.calorias 
-                        ? 'bg-green-50 text-green-700' 
-                        : 'bg-red-50 text-red-700'
-                    }`}>
-                      {entry.metasAtingidas.calorias ? 'Meta Calórica ✓' : 'Meta Calórica ✗'}
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-[#B0B0B0] text-sm">Metas de Proteína</p>
+                      <p className="text-xl font-semibold text-white mt-1">{progresso.metasProteina}/7</p>
                     </div>
-                    <div className={`px-3 py-1 rounded-full text-sm ${
-                      entry.metasAtingidas.proteina 
-                        ? 'bg-green-50 text-green-700' 
-                        : 'bg-red-50 text-red-700'
-                    }`}>
-                      {entry.metasAtingidas.proteina ? 'Meta Proteica ✓' : 'Meta Proteica ✗'}
+                    {progresso.metasProteina >= 5 ? (
+                      <div className="bg-[#1A1A1A] p-2 rounded-lg">
+                        <TrendingDown className="w-6 h-6 text-green-400" />
+                      </div>
+                    ) : (
+                      <div className="bg-[#1A1A1A] p-2 rounded-lg">
+                        <TrendingUp className="w-6 h-6 text-orange-400" />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-[#B0B0B0] text-sm">Treinos Realizados</p>
+                      <p className="text-xl font-semibold text-white mt-1">{progresso.treinos}/7</p>
+                    </div>
+                    <div className="bg-[#1A1A1A] p-2 rounded-lg">
+                      <Dumbbell className="w-6 h-6 text-indigo-400" />
                     </div>
                   </div>
+
+                  {progresso.diferencaPeso !== null && (
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-[#B0B0B0] text-sm">Variação de Peso</p>
+                        <p className="text-xl font-semibold text-white mt-1">
+                          {progresso.diferencaPeso > 0 ? '+' : ''}{progresso.diferencaPeso.toFixed(1)} kg
+                        </p>
+                      </div>
+                      <div className="bg-[#1A1A1A] p-2 rounded-lg">
+                        <Scale className="w-6 h-6 text-blue-400" />
+                      </div>
+                    </div>
+                  )}
                 </div>
-              </div>
-            ))}
-          </div>
-        </>
-      )}
+              </motion.div>
+            )}
+
+            {/* Lista de Dias */}
+            <div className="space-y-4">
+              <h2 className="text-lg font-semibold text-white mb-2">Registros Diários</h2>
+              
+              {history.slice().reverse().map((day, index) => (
+                <motion.div 
+                  key={day.date}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                  className="bg-[#151515] rounded-xl shadow-lg border border-[#222222] overflow-hidden"
+                >
+                  <motion.div 
+                    className="p-4 cursor-pointer"
+                    onClick={() => toggleExpandDay(day.date)}
+                    whileHover={{ backgroundColor: 'rgba(255, 255, 255, 0.03)' }}
+                  >
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="text-white font-medium">{formatDate(day.date)}</p>
+                        <p className="text-[#B0B0B0] text-xs">{formatDay(day.date)}</p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        {day.workoutDone && (
+                          <div className="bg-[#1A1A1A] p-1.5 rounded-lg">
+                            <Dumbbell className="w-4 h-4 text-indigo-400" />
+                          </div>
+                        )}
+                        <motion.div
+                          animate={{ rotate: expandedDay === day.date ? 90 : 0 }}
+                          transition={{ duration: 0.2 }}
+                        >
+                          <ChevronRight className="w-5 h-5 text-[#B0B0B0]" />
+                        </motion.div>
+                      </div>
+                    </div>
+                  </motion.div>
+                  
+                  <AnimatePresence>
+                    {expandedDay === day.date && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.3 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="px-4 pb-4 pt-1 border-t border-[#222222]">
+                          <div className="grid grid-cols-2 gap-3 mb-4">
+                            <div className="bg-[#1A1A1A] p-3 rounded-lg">
+                              <div className="flex items-center gap-2 mb-1">
+                                <Utensils className="w-4 h-4 text-orange-400" />
+                                <p className="text-[#B0B0B0] text-xs">Calorias</p>
+                              </div>
+                              <p className="text-white font-medium">{day.totalCalories} kcal</p>
+                              <div className="mt-1 text-xs">
+                                {day.metasAtingidas.calorias ? (
+                                  <span className="text-green-400">Meta atingida</span>
+                                ) : (
+                                  <span className="text-orange-400">Meta não atingida</span>
+                                )}
+                              </div>
+                            </div>
+                            
+                            <div className="bg-[#1A1A1A] p-3 rounded-lg">
+                              <div className="flex items-center gap-2 mb-1">
+                                <Target className="w-4 h-4 text-green-400" />
+                                <p className="text-[#B0B0B0] text-xs">Proteínas</p>
+                              </div>
+                              <p className="text-white font-medium">{day.totalProtein} g</p>
+                              <div className="mt-1 text-xs">
+                                {day.metasAtingidas.proteina ? (
+                                  <span className="text-green-400">Meta atingida</span>
+                                ) : (
+                                  <span className="text-orange-400">Meta não atingida</span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                          
+                          {day.weight && (
+                            <div className="bg-[#1A1A1A] p-3 rounded-lg mb-4">
+                              <div className="flex items-center gap-2 mb-1">
+                                <Scale className="w-4 h-4 text-blue-400" />
+                                <p className="text-[#B0B0B0] text-xs">Peso Registrado</p>
+                              </div>
+                              <p className="text-white font-medium">{day.weight} kg</p>
+                            </div>
+                          )}
+                          
+                          {day.entries.length > 0 && (
+                            <div>
+                              <p className="text-[#B0B0B0] text-xs mb-2">Refeições do Dia</p>
+                              <div className="space-y-2">
+                                {day.entries.map((entry, i) => (
+                                  <div key={i} className="bg-[#1A1A1A] p-3 rounded-lg">
+                                    <div className="flex justify-between items-start">
+                                      <p className="text-white font-medium">{entry.food}</p>
+                                      <div className="flex items-center gap-1 text-[#B0B0B0] text-xs">
+                                        <Clock className="w-3 h-3" />
+                                        {entry.time}
+                                      </div>
+                                    </div>
+                                    <div className="flex gap-3 mt-1 text-xs text-[#B0B0B0]">
+                                      <div className="flex items-center gap-1">
+                                        <Utensils className="w-3 h-3 text-orange-400" />
+                                        {entry.calories} kcal
+                                      </div>
+                                      <div className="flex items-center gap-1">
+                                        <Target className="w-3 h-3 text-green-400" />
+                                        {entry.protein} g
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 };

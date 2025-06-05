@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gerador de Ícones PWA</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #1a1a1a;
+      color: white;
+    }
+    .icon-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      margin-top: 20px;
+    }
+    .icon-item {
+      text-align: center;
+    }
+    button {
+      background-color: #00E676;
+      color: black;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-top: 20px;
+      font-weight: bold;
+    }
+    canvas {
+      background-color: transparent;
+      border: 1px solid #333;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Gerador de Ícones PWA</h1>
+  <p>Esta ferramenta gera ícones PNG a partir do SVG do logo para uso no PWA.</p>
+  
+  <div>
+    <svg id="sourceSvg" width="200" height="200" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- Fundo com gradiente idêntico ao da tela de login -->
+      <rect width="512" height="512" rx="128" fill="url(#paint0_linear)"/>
+      
+      <!-- Ícone de haltere (Dumbbell) simplificado -->
+      <path d="M160 256C160 238.33 174.33 224 192 224H320C337.67 224 352 238.33 352 256C352 273.67 337.67 288 320 288H192C174.33 288 160 273.67 160 256Z" fill="white"/>
+      <path d="M128 176V336C128 344.84 120.84 352 112 352C103.16 352 96 344.84 96 336V176C96 167.16 103.16 160 112 160C120.84 160 128 167.16 128 176Z" fill="white"/>
+      <path d="M416 176V336C416 344.84 408.84 352 400 352C391.16 352 384 344.84 384 336V176C384 167.16 391.16 160 400 160C408.84 160 416 167.16 416 176Z" fill="white"/>
+      <path d="M160 176V336C160 344.84 152.84 352 144 352C135.16 352 128 344.84 128 336V176C128 167.16 135.16 160 144 160C152.84 160 160 167.16 160 176Z" fill="white"/>
+      <path d="M384 176V336C384 344.84 376.84 352 368 352C359.16 352 352 344.84 352 336V176C352 167.16 359.16 160 368 160C376.84 160 384 167.16 384 176Z" fill="white"/>
+      
+      <!-- Definição do gradiente -->
+      <defs>
+        <linearGradient id="paint0_linear" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stop-color="#1A1A1A"/>
+          <stop offset="100%" stop-color="#00E676"/>
+        </linearGradient>
+      </defs>
+    </svg>
+  </div>
+  
+  <button id="generateBtn">Gerar Ícones PNG</button>
+  
+  <div class="icon-container" id="iconContainer"></div>
+  
+  <script>
+    const sizes = [192, 512, 180, 167, 152];
+    const iconContainer = document.getElementById('iconContainer');
+    const generateBtn = document.getElementById('generateBtn');
+    const sourceSvg = document.getElementById('sourceSvg');
+    
+    generateBtn.addEventListener('click', generateIcons);
+    
+    function generateIcons() {
+      iconContainer.innerHTML = '';
+      
+      sizes.forEach(size => {
+        const iconItem = document.createElement('div');
+        iconItem.className = 'icon-item';
+        
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        canvas.style.width = '150px';
+        canvas.style.height = '150px';
+        
+        const ctx = canvas.getContext('2d');
+        
+        // Criar uma imagem a partir do SVG
+        const svgData = new XMLSerializer().serializeToString(sourceSvg);
+        const img = new Image();
+        const svgBlob = new Blob([svgData], {type: 'image/svg+xml;charset=utf-8'});
+        const url = URL.createObjectURL(svgBlob);
+        
+        img.onload = function() {
+          ctx.drawImage(img, 0, 0, size, size);
+          URL.revokeObjectURL(url);
+          
+          // Adicionar link de download
+          const downloadLink = document.createElement('a');
+          downloadLink.href = canvas.toDataURL('image/png');
+          downloadLink.download = `icon-${size}x${size}.png`;
+          downloadLink.textContent = `Baixar ${size}x${size}`;
+          downloadLink.style.display = 'block';
+          downloadLink.style.marginTop = '10px';
+          downloadLink.style.color = '#00E676';
+          
+          iconItem.appendChild(canvas);
+          iconItem.appendChild(document.createElement('br'));
+          iconItem.appendChild(downloadLink);
+          iconContainer.appendChild(iconItem);
+        };
+        
+        img.src = url;
+      });
+    }
+  </script>
+</body>
+</html>

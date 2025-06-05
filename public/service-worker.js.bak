@@ -1,0 +1,120 @@
+const CACHE_NAME = 'diet-tracker-v2';
+const urlsToCache = [
+  '/',
+  '/index.html',
+  '/manifest.json',
+  '/favicon.ico',
+  '/assets/index.css',
+  '/assets/index.js',
+  '/static/css/main.css',
+  '/static/js/main.js',
+  '/icons/icon-72x72.png',
+  '/icons/icon-96x96.png',
+  '/icons/icon-128x128.png',
+  '/icons/icon-144x144.png',
+  '/icons/icon-152x152.png',
+  '/icons/icon-192x192.png',
+  '/icons/icon-384x384.png',
+  '/icons/icon-512x512.png'
+];
+
+// Lista de domínios que não devem ser cacheados (exemplo: Supabase)
+const EXCLUDED_DOMAINS = [
+  'supabase.co',
+  'pbejndhzvliniswiexin.supabase.co'
+];
+
+// Verifica se um URL deve ser excluído do cache
+function shouldExcludeFromCache(url) {
+  return EXCLUDED_DOMAINS.some(domain => url.includes(domain));
+}
+
+// Controlador de eventos de instalação
+self.addEventListener('install', (event) => {
+  console.log('[Service Worker] Instalando...');
+  // Imediatamente tornar-se o service worker ativo, sem esperar pela atualização da página
+  self.skipWaiting();
+  
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then((cache) => {
+        console.log('[Service Worker] Cache aberto');
+        return cache.addAll(urlsToCache);
+      })
+      .catch(error => {
+        console.error('[Service Worker] Erro ao abrir cache:', error);
+      })
+  );
+});
+
+// Controlador de eventos de fetch (requisições de rede)
+self.addEventListener('fetch', (event) => {
+  // Não interceptar requisições para Supabase
+  if (shouldExcludeFromCache(event.request.url)) {
+    return;
+  }
+  
+  // Tentativa de responder com conteúdo em cache primeiro, depois buscar na rede como fallback
+  event.respondWith(
+    caches.match(event.request)
+      .then((response) => {
+        if (response) {
+          return response;
+        }
+        
+        return fetch(event.request.clone())
+          .then(response => {
+            // Se não for uma resposta válida, apenas retorná-la
+            if (!response || response.status !== 200 || response.type !== 'basic') {
+              return response;
+            }
+            
+            // Caso contrário, armazenar em cache para futuras requisições
+            if (event.request.method === 'GET') {
+              const responseToCache = response.clone();
+              caches.open(CACHE_NAME)
+                .then(cache => cache.put(event.request, responseToCache))
+                .catch(error => console.error('[Service Worker] Erro ao cachear resposta:', error));
+            }
+            
+            return response;
+          })
+          .catch(error => {
+            console.error('[Service Worker] Erro ao buscar recurso:', error);
+            throw error;
+          });
+      })
+      .catch(error => {
+        console.error('[Service Worker] Erro ao verificar cache:', error);
+        return fetch(event.request);
+      })
+  );
+});
+
+// Controlador de eventos de ativação (quando o service worker se torna ativo)
+self.addEventListener('activate', (event) => {
+  console.log('[Service Worker] Ativando...');
+  // Tomar controle das páginas imediatamente
+  self.clients.claim();
+  
+  const cacheWhitelist = [CACHE_NAME];
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cacheName) => {
+          if (cacheWhitelist.indexOf(cacheName) === -1) {
+            console.log('[Service Worker] Deletando cache antigo:', cacheName);
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    })
+  );
+});
+
+// Controlador para mensagens recebidas da página principal
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+}); 

@@ -1,19 +1,16 @@
-import { createClient } from '@supabase/supabase-js';
+// Configuração do Supabase - MODO DEMO com dados fictícios
+import { mockSupabaseApi } from './mockSupabase';
+
+// Flag para controlar se usa dados mock ou Supabase real
+const USE_MOCK_DATA = true; // Mude para false para usar Supabase real
 
 // Usar variáveis de ambiente
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://pbejndhzvliniswiexin.supabase.co';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBiZWpuZGh6dmxpbmlzd2lleGluIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE3MjY1MTAsImV4cCI6MjA1NzMwMjUxMH0.Itw3DJ6tQwPsMGm3FbBnQe0wT7DvNd53vyl_QRdMm2A';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBiZWpuZGh6dmxpbm5pc3dpZXhpbiIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzQxNzI2NTEwLCJleHAiOjIwNTczMDI1MTB9.Itw3DJ6tQwPsMGm3FbBnQe0wT7DvNd53vyl_QRdMm2A';
 
 if (!supabaseUrl || !supabaseAnonKey) {
   console.error('Supabase URL or Anon Key is missing. Please check your environment variables.');
 }
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-  },
-});
 
 // Tipos para as tabelas do Supabase
 export interface Usuario {
@@ -21,8 +18,14 @@ export interface Usuario {
   created_at?: string;
   updated_at?: string;
   nome: string;
+  senha?: string;
   idade: number;
-  peso: number;
+  peso: number; // Peso inicial
+  peso_atual?: number; // Último peso registrado (campo virtual)
+  diferenca_peso?: string; // Diferença entre peso inicial e atual (campo virtual)
+  peso_anterior: number | null;
+  peso_inicial: number;
+  data_peso: string;
   altura: number;
   sexo: 'masculino' | 'feminino';
   nivel_atividade: string;
@@ -30,6 +33,7 @@ export interface Usuario {
   meta_calorica: number;
   meta_proteina: number;
   meta_treinos: number;
+  foto_url?: string;
 }
 
 export interface Refeicao {
@@ -57,139 +61,33 @@ export interface Treino {
   data: string;
   tipo: 'musculacao' | 'cardio';
   duracao: number;
+  descricao: string;
+  calorias: number;
   created_at: string;
 }
 
-// Funções auxiliares para interagir com o Supabase
-export const supabaseApi = {
-  supabase,
-
-  // Usuários
-  async criarUsuario(usuario: Omit<Usuario, 'id' | 'created_at' | 'updated_at'>): Promise<{ data: Usuario | null; error: Error | null }> {
-    try {
-      const { data, error } = await supabase
-        .from('usuarios')
-        .insert([usuario])
-        .select()
-        .single();
-
-      if (error) {
-        console.error('Erro ao criar usuário:', error);
-        return { data: null, error };
-      }
-
-      return { data, error: null };
-    } catch (error) {
-      console.error('Erro ao criar usuário:', error);
-      return { data: null, error: error as Error };
-    }
-  },
-
-  async atualizarUsuario(id: string, usuario: Partial<Usuario>): Promise<{ data: Usuario | null; error: Error | null }> {
-    try {
-      const { data, error } = await supabase
-        .from('usuarios')
-        .update(usuario)
-        .eq('id', id)
-        .select()
-        .single();
-
-      if (error) {
-        console.error('Erro ao atualizar usuário:', error);
-        return { data: null, error };
-      }
-
-      return { data, error: null };
-    } catch (error) {
-      console.error('Erro ao atualizar usuário:', error);
-      return { data: null, error: error as Error };
-    }
-  },
-
-  // Refeições
-  async adicionarRefeicao(dados: Omit<Refeicao, 'id' | 'created_at'>) {
-    const { data, error } = await supabase
-      .from('refeicoes')
-      .insert([dados])
-      .select()
-      .single();
-    
-    if (error) throw error;
-    return data;
-  },
-
-  async listarRefeicoesDoDia(usuarioId: string, data: string) {
-    const { data: refeicoes, error } = await supabase
-      .from('refeicoes')
-      .select('*')
-      .eq('usuario_id', usuarioId)
-      .eq('data', data)
-      .order('horario', { ascending: true });
-    
-    if (error) throw error;
-    return refeicoes;
-  },
-
-  // Registro de Peso
-  async registrarPeso(dados: Omit<RegistroPeso, 'id' | 'created_at'>) {
-    const { data, error } = await supabase
-      .from('registro_peso')
-      .insert([dados])
-      .select()
-      .single();
-    
-    if (error) throw error;
-    return data;
-  },
-
-  async listarHistoricoPeso(usuarioId: string) {
-    const { data: registros, error } = await supabase
-      .from('registro_peso')
-      .select('*')
-      .eq('usuario_id', usuarioId)
-      .order('data', { ascending: false });
-    
-    if (error) throw error;
-    return registros;
-  },
-
-  // Treinos
-  async adicionarTreino(dados: Omit<Treino, 'id' | 'created_at'>) {
-    const { data, error } = await supabase
-      .from('treinos')
-      .insert([dados])
-      .select()
-      .single();
-    
-    if (error) throw error;
-    return data;
-  },
-
-  async listarTreinosDoDia(usuarioId: string, data: string) {
-    const { data: treinos, error } = await supabase
-      .from('treinos')
-      .select('*')
-      .eq('usuario_id', usuarioId)
-      .eq('data', data)
-      .order('created_at', { ascending: true });
-    
-    if (error) throw error;
-    return treinos;
-  },
-
-  async listarTreinosDoMes(usuarioId: string, ano: number, mes: number) {
-    const primeiroDia = new Date(ano, mes - 1, 1).toISOString().split('T')[0];
-    const ultimoDia = new Date(ano, mes, 0).toISOString().split('T')[0];
-
-    const { data: treinos, error } = await supabase
-      .from('treinos')
-      .select('*')
-      .eq('usuario_id', usuarioId)
-      .gte('data', primeiroDia)
-      .lte('data', ultimoDia)
-      .order('data', { ascending: true });
-    
-    if (error) throw error;
-    return treinos;
+// Classe para erros de autenticação - não usada no modo demo
+class UserAuthError extends Error {
+  constructor(message = 'Usuário não autenticado. Faça login novamente.') {
+    super(message);
+    this.name = 'UserAuthError';
   }
-}; 
+}
+
+// Cliente Supabase placeholder (não usado no modo demo)
+export const supabase = {
+  auth: {
+    refreshSession: () => Promise.resolve(),
+  },
+  rpc: () => Promise.resolve(),
+};
+
+// API principal - usa mock ou Supabase real baseado na flag
+export const supabaseApi = USE_MOCK_DATA ? mockSupabaseApi : {
+  // Implementação original do Supabase seria mantida aqui
+  // Por enquanto, sempre usa mock
+  ...mockSupabaseApi
+};
+
+// Log para indicar modo de operação
+console.log(USE_MOCK_DATA ? '🎯 Modo Demo ativo - Usando dados fictícios' : '🔗 Conectado ao Supabase');

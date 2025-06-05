@@ -2,33 +2,202 @@
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <meta name="theme-color" content="#343030" />
-    <meta name="description" content="Acompanhe sua dieta e treinos de forma simples e eficiente" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#1A1A1A" />
+    <meta name="description" content="Acompanhe sua dieta e treinos de forma simples e minimalista" />
     
     <!-- iOS meta tags -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="Diet Tracker" />
+    <meta name="apple-mobile-web-app-title" content="minimalist.fit" />
     
-    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <!-- Favicon para navegador -->
+    <link rel="icon" type="image/svg+xml" href="/pwa-icon-simple.svg" />
+    
+    <!-- iOS icons - PNG específicos para iOS -->
+    <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
+    <link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-152x152.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-180x180.png" />
+    <link rel="apple-touch-icon" sizes="167x167" href="/icons/icon-167x167.png" />
+    
     <link rel="manifest" href="/manifest.json" />
     
-    <title>Diet & Workout Tracker</title>
+    <title>minimalist.fit</title>
+    
+    <!-- Error tracking & recovery -->
+    <script>
+      // Cria um contêiner para notificações
+      function createErrorContainer() {
+        const container = document.createElement('div');
+        container.id = 'error-container';
+        container.style.position = 'fixed';
+        container.style.top = '0';
+        container.style.left = '0';
+        container.style.right = '0';
+        container.style.display = 'flex';
+        container.style.flexDirection = 'column';
+        container.style.zIndex = '9999';
+        document.body.appendChild(container);
+        return container;
+      }
+
+      // Adiciona uma mensagem de erro
+      function addErrorMessage(message, isWarning = false) {
+        let container = document.getElementById('error-container');
+        if (!container) {
+          container = createErrorContainer();
+        }
+
+        const errorDiv = document.createElement('div');
+        errorDiv.style.backgroundColor = isWarning ? 'orange' : 'red';
+        errorDiv.style.color = 'white';
+        errorDiv.style.padding = '10px';
+        errorDiv.style.margin = '4px';
+        errorDiv.style.borderRadius = '4px';
+        errorDiv.style.boxShadow = '0 2px 4px rgba(0,0,0,0.2)';
+        errorDiv.style.display = 'flex';
+        errorDiv.style.justifyContent = 'space-between';
+        errorDiv.style.alignItems = 'center';
+
+        const messageSpan = document.createElement('span');
+        messageSpan.innerText = message;
+        errorDiv.appendChild(messageSpan);
+
+        const closeButton = document.createElement('button');
+        closeButton.innerText = '×';
+        closeButton.style.background = 'none';
+        closeButton.style.border = 'none';
+        closeButton.style.color = 'white';
+        closeButton.style.fontSize = '20px';
+        closeButton.style.cursor = 'pointer';
+        closeButton.style.marginLeft = '10px';
+        closeButton.onclick = function() {
+          errorDiv.remove();
+        };
+        errorDiv.appendChild(closeButton);
+
+        container.appendChild(errorDiv);
+
+        // Auto-remover após 10 segundos
+        setTimeout(() => {
+          errorDiv.remove();
+        }, 10000);
+
+        return errorDiv;
+      }
+
+      // Adiciona botão para recarregar a página
+      function addReloadButton(errorDiv) {
+        const reloadButton = document.createElement('button');
+        reloadButton.innerText = 'Recarregar';
+        reloadButton.style.marginLeft = '10px';
+        reloadButton.style.padding = '4px 8px';
+        reloadButton.style.backgroundColor = 'white';
+        reloadButton.style.color = 'black';
+        reloadButton.style.border = 'none';
+        reloadButton.style.borderRadius = '4px';
+        reloadButton.style.cursor = 'pointer';
+        reloadButton.onclick = function() {
+          window.location.reload();
+        };
+        errorDiv.insertBefore(reloadButton, errorDiv.lastChild);
+      }
+
+      // Captura erros de JS
+      window.addEventListener('error', function(event) {
+        console.error('CAPTURED ERROR:', event.error || event.message);
+        const errorDiv = addErrorMessage('Erro: ' + (event.error ? event.error.message : event.message));
+        addReloadButton(errorDiv);
+      });
+
+      // Captura erros de promessas não tratadas
+      window.addEventListener('unhandledrejection', function(event) {
+        console.error('UNHANDLED PROMISE REJECTION:', event.reason);
+        
+        // Verificar se é o erro específico do canal de mensagens
+        if (event.reason && event.reason.message && 
+            event.reason.message.includes('message channel closed')) {
+          const errorDiv = addErrorMessage('Erro de comunicação: ' + event.reason.message, true);
+          addReloadButton(errorDiv);
+          event.preventDefault();
+        } else {
+          const errorDiv = addErrorMessage('Erro de promessa: ' + (event.reason ? event.reason.message : 'Erro desconhecido'));
+          addReloadButton(errorDiv);
+        }
+      });
+    </script>
     
     <!-- Service Worker Registration -->
     <script>
+      // Remover qualquer Service Worker existente
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+          for(let registration of registrations) {
+            registration.unregister()
+              .then(function() {
+                console.log('Service Worker desregistrado com sucesso');
+                window.location.reload();
+              })
+              .catch(function(error) {
+                console.error('Erro ao desregistrar Service Worker:', error);
+              });
+          }
+        });
+      }
+      
+      /* Registro do Service Worker comentado temporariamente
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
           navigator.serviceWorker.register('/service-worker.js')
             .then((registration) => {
               console.log('ServiceWorker registrado com sucesso:', registration.scope);
+              
+              // Verificar e atualizar o service worker se necessário
+              registration.addEventListener('updatefound', () => {
+                const newWorker = registration.installing;
+                console.log('Novo service worker instalando...');
+                
+                newWorker.addEventListener('statechange', () => {
+                  if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                    console.log('Novo service worker disponível');
+                    // Notificar o usuário sobre a atualização
+                    const updateDiv = addErrorMessage('Nova versão disponível!', true);
+                    const updateButton = document.createElement('button');
+                    updateButton.innerText = 'Atualizar';
+                    updateButton.style.marginLeft = '10px';
+                    updateButton.style.padding = '4px 8px';
+                    updateButton.style.backgroundColor = 'white';
+                    updateButton.style.color = 'black';
+                    updateButton.style.border = 'none';
+                    updateButton.style.borderRadius = '4px';
+                    updateButton.style.cursor = 'pointer';
+                    updateButton.onclick = function() {
+                      newWorker.postMessage({ type: 'SKIP_WAITING' });
+                      window.location.reload();
+                    };
+                    updateDiv.insertBefore(updateButton, updateDiv.lastChild);
+                  }
+                });
+              });
+              
+              // Verificar se há uma atualização
+              setInterval(() => {
+                registration.update()
+                  .catch(err => console.error('Erro ao verificar atualizações:', err));
+              }, 60 * 60 * 1000); // Verificar a cada hora
             })
             .catch((error) => {
               console.log('Falha ao registrar o ServiceWorker:', error);
+              addErrorMessage('Falha ao registrar o ServiceWorker: ' + error.message);
             });
+            
+          // Listener para mudanças no service worker
+          navigator.serviceWorker.addEventListener('controllerchange', () => {
+            console.log('Service worker controller changed');
+          });
         });
       }
+      */
     </script>
   </head>
   <body>

@@ -3,17 +3,19 @@
   <!-- Fundo com gradiente -->
   <rect width="1024" height="1024" rx="224" fill="url(#paint0_linear)"/>
   
-  <!-- Círculo de progresso -->
-  <path d="M512 224C644.548 224 752 331.452 752 464C752 596.548 644.548 704 512 704C379.452 704 272 596.548 272 464C272 331.452 379.452 224 512 224ZM512 304C423.635 304 352 375.635 352 464C352 552.365 423.635 624 512 624C600.365 624 672 552.365 672 464C672 375.635 600.365 304 512 304Z" fill="white" fill-opacity="0.9"/>
+  <!-- Ícone de braço musculoso -->
+  <path d="M512 304C423.635 304 352 375.635 352 464C352 552.365 423.635 624 512 624C600.365 624 672 552.365 672 464C672 375.635 600.365 304 512 304Z" fill="black" fill-opacity="0.2"/>
   
-  <!-- Garfo e Faca -->
-  <path d="M464 384V544M560 384V544M512 384V544M464 384H560" stroke="white" stroke-width="32" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M650 400C636.87 400 625 406 625 406L565 464C565 464 565 434 540 419.5M499.5 600H433V567C433 549 448.58 527 470.76 527C471.16 527 471.55 527.05 471.92 527.15M577.465 529C588.575 529 597.576 538 597.576 549.1C597.576 560.2 588.575 569.2 577.475 569.2C566.375 569.2 557.475 569.2 557.475 549.1C557.465 538 566.465 529 577.465 529ZM525.352 558C525.352 574.66 511.163 588 495.515 588C479.863 588 465.695 574.66 465.695 558C465.695 541.34 479.863 528 495.515 528C511.163 528 525.352 541.34 525.352 558Z" stroke="white" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
+  
+  <!-- Texto "minimalist.fit" -->
+  <text x="512" y="750" font-family="Arial, sans-serif" font-weight="bold" font-size="72" text-anchor="middle" fill="white">minimalist<tspan fill="#00E676">.</tspan>fit</text>
   
   <!-- Definição do gradiente -->
   <defs>
     <linearGradient id="paint0_linear" x1="0" y1="0" x2="1024" y2="1024" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#3B82F6"/>
-      <stop offset="100%" stop-color="#22C55E"/>
+      <stop offset="0%" stop-color="#1A1A1A"/>
+      <stop offset="100%" stop-color="#00E676"/>
     </linearGradient>
   </defs>
-</svg> 
+</svg>
